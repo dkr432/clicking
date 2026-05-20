@@ -1,26 +1,67 @@
 import time
+import random
+import statistics
 
-def on_button_click():
-    # 1. 측정 시작 (초 단위로 반환됨)
-    start_time = time.perf_counter()
+def reaction_test():
+    results = []
     
-    # ---------------------------------------------
-    # 2. 여기에 반응 속도를 측정하고 싶은 앱 로직을 넣으세요.
-    # 예: 데이터베이스 조회, 이미지 처리, API 호출 등
-    print("앱 로직 수행 중...")
-    time.sleep(0.123)  # 데모를 위한 0.123초 대기
-    # ---------------------------------------------
+    print("=" * 40)
+    print("       반응속도 테스트")
+    print("=" * 40)
+    print("초록색 신호가 뜨면 Enter를 누르세요!\n")
     
-    # 3. 측정 종료
-    end_time = time.perf_counter()
+    rounds = int(input("몇 번 테스트할까요? (기본 5): ") or 5)
+    print()
     
-    # 4. 결과 계산 (초 단위 -> 밀리초(ms) 단위로 변환)
-    duration_ms = (end_time - start_time) * 1000
+    for i in range(rounds):
+        print(f"[{i+1}/{rounds}] 준비하세요...", end="", flush=True)
+        
+        delay = random.uniform(1.5, 4.0)
+        time.sleep(delay)
+        
+        print("\r🟢 지금 Enter!")
+        start = time.perf_counter()
+        
+        try:
+            input()
+        except KeyboardInterrupt:
+            print("\n테스트 중단됨")
+            break
+        
+        elapsed = (time.perf_counter() - start) * 1000  # ms 변환
+        results.append(elapsed)
+        
+        if elapsed < 200:
+            grade = "⚡ 엄청 빠르네요!"
+        elif elapsed < 280:
+            grade = "👍 빠른 편이에요"
+        elif elapsed < 380:
+            grade = "😊 보통이에요"
+        else:
+            grade = "🐢 조금 느린 편이에요"
+        
+        print(f"   → {elapsed:.1f} ms  {grade}\n")
     
-    print(f"⏱️ 반응 속도: {duration_ms:.2f} ms")
+    if not results:
+        return
     
-    if duration_ms > 200:
-        print("⚠️ 경고: 반응 속도가 200ms를 넘었습니다. 사용자가 느리다고 느낄 수 있습니다.")
+    print("=" * 40)
+    print("           결과 요약")
+    print("=" * 40)
+    print(f"  시도 횟수 : {len(results)}회")
+    print(f"  최고 기록 : {min(results):.1f} ms")
+    print(f"  최저 기록 : {max(results):.1f} ms")
+    print(f"  평  균    : {statistics.mean(results):.1f} ms")
+    if len(results) > 1:
+        print(f"  표준편차  : {statistics.stdev(results):.1f} ms")
+    print("=" * 40)
+    
+    print("\n📊 기록 막대그래프")
+    max_ms = max(results)
+    for idx, ms in enumerate(results, 1):
+        bar_len = int((ms / max_ms) * 30)
+        bar = "█" * bar_len
+        print(f"  {idx}회차 | {bar:<30} {ms:.1f} ms")
 
-# 테스트 실행
-on_button_click()
+if __name__ == "__main__":
+    reaction_test()
