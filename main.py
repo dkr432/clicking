@@ -1,67 +1,64 @@
+import tkinter as tk
 import time
 import random
-import statistics
 
-def reaction_test():
-    results = []
-    
-    print("=" * 40)
-    print("       반응속도 테스트")
-    print("=" * 40)
-    print("초록색 신호가 뜨면 Enter를 누르세요!\n")
-    
-    rounds = int(input("몇 번 테스트할까요? (기본 5): ") or 5)
-    print()
-    
-    for i in range(rounds):
-        print(f"[{i+1}/{rounds}] 준비하세요...", end="", flush=True)
+class ReactionTimeApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("반응속도 측정기")
+        self.root.geometry("500x500")
         
-        delay = random.uniform(1.5, 4.0)
-        time.sleep(delay)
+        self.state = "waiting"  # waiting, ready, go
+        self.start_time = 0
         
-        print("\r🟢 지금 Enter!")
-        start = time.perf_counter()
+        # 메인 버튼 (전체 화면 영역)
+        self.button = tk.Button(
+            root,
+            text="클릭해서 시작하세요!",
+            font=("Arial", 20),
+            bg="red",
+            fg="white",
+            command=self.on_click
+        )
+        self.button.pack(expand=True, fill="both", padx=20, pady=20)
         
-        try:
-            input()
-        except KeyboardInterrupt:
-            print("\n테스트 중단됨")
-            break
-        
-        elapsed = (time.perf_counter() - start) * 1000  # ms 변환
-        results.append(elapsed)
-        
-        if elapsed < 200:
-            grade = "⚡ 엄청 빠르네요!"
-        elif elapsed < 280:
-            grade = "👍 빠른 편이에요"
-        elif elapsed < 380:
-            grade = "😊 보통이에요"
-        else:
-            grade = "🐢 조금 느린 편이에요"
-        
-        print(f"   → {elapsed:.1f} ms  {grade}\n")
+        # 결과 표시 라벨
+        self.result_label = tk.Label(
+            root,
+            text="",
+            font=("Arial", 16)
+        )
+        self.result_label.pack(pady=10)
     
-    if not results:
-        return
+    def on_click(self):
+        if self.state == "waiting":
+            # 대기 상태로 전환
+            self.button.config(bg="orange", text="초록색이 되면 클릭하세요!")
+            self.state = "ready"
+            # 1~5초 사이 랜덤 대기
+            delay = random.randint(1000, 5000)
+            self.root.after(delay, self.show_green)
+        
+        elif self.state == "ready":
+            # 너무 빨리 클릭한 경우
+            self.button.config(bg="red", text="너무 빨라요! 다시 시도하세요.")
+            self.state = "waiting"
+        
+        elif self.state == "go":
+            # 반응속도 계산
+            end_time = time.time()
+            reaction_time = int((end_time - self.start_time) * 1000)
+            self.button.config(bg="red", text="다시 시도하기")
+            self.result_label.config(text=f"당신의 반응속도: {reaction_time}ms")
+            self.state = "waiting"
     
-    print("=" * 40)
-    print("           결과 요약")
-    print("=" * 40)
-    print(f"  시도 횟수 : {len(results)}회")
-    print(f"  최고 기록 : {min(results):.1f} ms")
-    print(f"  최저 기록 : {max(results):.1f} ms")
-    print(f"  평  균    : {statistics.mean(results):.1f} ms")
-    if len(results) > 1:
-        print(f"  표준편차  : {statistics.stdev(results):.1f} ms")
-    print("=" * 40)
-    
-    print("\n📊 기록 막대그래프")
-    max_ms = max(results)
-    for idx, ms in enumerate(results, 1):
-        bar_len = int((ms / max_ms) * 30)
-        bar = "█" * bar_len
-        print(f"  {idx}회차 | {bar:<30} {ms:.1f} ms")
+    def show_green(self):
+        if self.state == "ready":
+            self.button.config(bg="green", text="클릭!")
+            self.start_time = time.time()
+            self.state = "go"
 
 if __name__ == "__main__":
-    reaction_test()
+    root = tk.Tk()
+    app = ReactionTimeApp(root)
+    root.mainloop()
